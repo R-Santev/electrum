@@ -79,6 +79,9 @@ def set_nolnet():
 
 ################################## transactions
 
+SIGHASH_ALL    = 1
+SIGHASH_FORKID = 0x40
+
 FEE_STEP = 10000
 MAX_FEE_RATE = 300000
 FEE_TARGETS = [25, 10, 5, 2]

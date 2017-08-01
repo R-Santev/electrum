@@ -637,6 +637,19 @@ class Transaction:
         return txin['type'] in ['p2wpkh-p2sh']
 
     @classmethod
+    def is_bip143_input(self, txin):
+        # return self.is_segwit_input(txin)
+        return True
+
+    @classmethod
+    def get_sighash(self):
+        return bitcoin.SIGHASH_ALL | bitcoin.SIGHASH_FORKID
+
+    @classmethod
+    def get_forkid(self):
+        return 0
+
+    @classmethod
     def input_script(self, txin, estimate_size=False):
         _type = txin['type']
         if _type == 'coinbase':
@@ -710,12 +723,12 @@ class Transaction:
 
     def serialize_preimage(self, i):
         nVersion = int_to_hex(self.version, 4)
-        nHashType = int_to_hex(1, 4)
+        nHashType = int_to_hex(self.get_sighash() | (self.get_forkid() << 8), 4)
         nLocktime = int_to_hex(self.locktime, 4)
         inputs = self.inputs()
         outputs = self.outputs()
         txin = inputs[i]
-        if self.is_segwit_input(txin):
+        if self.is_bip143_input(txin):
             hashPrevouts = Hash(''.join(self.serialize_outpoint(txin) for txin in inputs).decode('hex')).encode('hex')
             hashSequence = Hash(''.join(int_to_hex(txin.get('sequence', 0xffffffff - 1), 4) for txin in inputs).decode('hex')).encode('hex')
             hashOutputs = Hash(''.join(self.serialize_output(o) for o in outputs).decode('hex')).encode('hex')
@@ -830,7 +843,7 @@ class Transaction:
                     public_key = private_key.get_verifying_key()
                     sig = private_key.sign_digest_deterministic(pre_hash, hashfunc=hashlib.sha256, sigencode = ecdsa.util.sigencode_der)
                     assert public_key.verify_digest(sig, pre_hash, sigdecode = ecdsa.util.sigdecode_der)
-                    txin['signatures'][j] = sig.encode('hex') + '01'
+                    txin['signatures'][j] = sig.encode('hex') + int_to_hex(self.get_sighash(), 1)
                     txin['x_pubkeys'][j] = pubkey
                     txin['pubkeys'][j] = pubkey # needed for fd keys
                     self._inputs[i] = txin
