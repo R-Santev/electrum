@@ -2867,7 +2867,7 @@ class ElectrumWindow(QMainWindow, MessageBoxMixin, PrintError):
             self.show_error(_('Max fee exceeded'))
             return
         new_tx = self.wallet.cpfp(parent_tx, fee)
-        new_tx.set_rbf(True)
+        # new_tx.set_rbf(True)
         self.show_transaction(new_tx)
 
     def bump_fee_dialog(self, tx):

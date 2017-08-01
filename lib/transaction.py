@@ -796,6 +796,8 @@ class Transaction:
         return self.input_value() - self.output_value()
 
     def is_final(self):
+        return True
+
         return not any([x.get('sequence', 0xffffffff - 1) < 0xffffffff - 1 for x in self.inputs()])
 
     @profiler
