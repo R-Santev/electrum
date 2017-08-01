@@ -704,6 +704,8 @@ class Transaction:
         return s
 
     def set_rbf(self, rbf):
+        raise BaseException('Bitcoin Cash does not support RBF')
+
         nSequence = 0xffffffff - (2 if rbf else 1)
         for txin in self.inputs():
             txin['sequence'] = nSequence
