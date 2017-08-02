@@ -928,6 +928,8 @@ class Network(util.DaemonThread):
 
     def init_headers_file(self):
         filename = self.blockchains[0].path()
+        if not os.path.exists(filename):
+            open(filename, 'a').close()
         if os.path.exists(filename):
             self.downloading_headers = False
             return
