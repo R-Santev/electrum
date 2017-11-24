@@ -75,9 +75,9 @@ class NetworkConstants:
     def set_mainnet(cls):
         cls.TESTNET = False
         cls.WIF_PREFIX = 0x80
-        cls.ADDRTYPE_P2PKH = 0
-        cls.ADDRTYPE_P2SH = 5
-        cls.SEGWIT_HRP = "bc"
+        cls.ADDRTYPE_P2PKH = 38
+        cls.ADDRTYPE_P2SH = 23
+        cls.SEGWIT_HRP = "btg"
         cls.HEADERS_URL = "https://headers.electrum.org/blockchain_headers"
         cls.GENESIS = "000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f"
         cls.DEFAULT_PORTS = {'t': '50001', 's': '50002'}
@@ -89,7 +89,7 @@ class NetworkConstants:
         cls.WIF_PREFIX = 0xef
         cls.ADDRTYPE_P2PKH = 111
         cls.ADDRTYPE_P2SH = 196
-        cls.SEGWIT_HRP = "tb"
+        cls.SEGWIT_HRP = "tbtg"
         cls.HEADERS_URL = "https://headers.electrum.org/testnet_headers"
         cls.GENESIS = "000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943"
         cls.DEFAULT_PORTS = {'t':'51001', 's':'51002'}
