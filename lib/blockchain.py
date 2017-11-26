@@ -150,6 +150,8 @@ class Blockchain(util.PrintError):
             raise BaseException("prev hash mismatch: %s vs %s" % (prev_hash, header.get('prev_block_hash')))
         if bitcoin.NetworkConstants.TESTNET:
             return
+        if header.get('block_height') >= bitcoin.NetworkConstants.FORK_HEIGHT:
+            raise BaseException("post-fork block height: %d" % header.get('block_height'))
         if bits != header.get('bits'):
             raise BaseException("bits mismatch: %s vs %s" % (bits, header.get('bits')))
         if int('0x' + _hash, 16) > target:

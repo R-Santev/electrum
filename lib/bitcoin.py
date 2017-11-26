@@ -82,6 +82,7 @@ class NetworkConstants:
         cls.GENESIS = "000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f"
         cls.DEFAULT_PORTS = {'t': '50001', 's': '50002'}
         cls.DEFAULT_SERVERS = read_json_dict('servers.json')
+        cls.FORK_HEIGHT = 491407
 
     @classmethod
     def set_testnet(cls):
