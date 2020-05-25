@@ -1,66 +1,32 @@
 {
-    "hsmithsxurybd7uh.onion": {
-        "pruning": "-",
-        "s": "53012",
-        "t": "53011",
-        "version": "1.4"
-    },
-    "testnet.hsmiths.com": {
-        "pruning": "-",
-        "s": "53012",
-        "t": "53011",
-        "version": "1.4"
-    },
-    "testnet.qtornado.com": {
-        "pruning": "-",
-        "s": "51002",
-        "t": "51001",
-        "version": "1.4.2"
-    },
-    "testnet1.bauerj.eu": {
+    "test-node1.bitcoingold.org": {
         "pruning": "-",
         "s": "50002",
-        "version": "1.4.2"
+        "version": "1.2"
     },
-    "tn.not.fyi": {
+    "test-node2.bitcoingold.org": {
         "pruning": "-",
-        "s": "55002",
-        "t": "55001",
-        "version": "1.4"
+        "s": "50002",
+        "version": "1.2"
     },
-    "bitcoin.cluelessperson.com": {
+    "test-node3.bitcoingold.org": {
         "pruning": "-",
-        "s": "51002",
-        "t": "51001",
-        "version": "1.4"
+        "s": "50002",
+        "version": "1.2"
     },
-    "electrum.blockstream.info": {
+    "test-node1.btcgpu.org": {
         "pruning": "-",
-        "s": "60002",
-        "t": "60001",
-        "version": "1.4"
+        "s": "50002",
+        "version": "1.2"
     },
-    "explorerzydxu5ecjrkwceayqybizmpjjznk5izmitf2modhcusuqlid.onion": {
+    "test-node2.btcgpu.org": {
         "pruning": "-",
-        "t": "143",
-        "version": "1.4"
+        "s": "50002",
+        "version": "1.2"
     },
-    "testnet.aranguren.org": {
+    "test-node3.btcgpu.org": {
         "pruning": "-",
-        "s": "51002",
-        "t": "51001",
-        "version": "1.4.2"
-    },
-    "wgzwu3vg3i54wayx.onion": {
-        "pruning": "-",
-        "s": "51002",
-        "t": "51001",
-        "version": "1.4.2"
-    },
-    "blockstream.info": {
-        "pruning": "-",
-        "s": "993",
-        "t": "143",
-        "version": "1.4"
+        "s": "50002",
+        "version": "1.2"
     }
 }
