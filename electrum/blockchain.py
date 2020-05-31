@@ -49,26 +49,56 @@ class InvalidHeader(Exception):
 def serialize_header(header_dict: dict) -> str:
     s = int_to_hex(header_dict['version'], 4) \
         + rev_hex(header_dict['prev_block_hash']) \
-        + rev_hex(header_dict['merkle_root']) \
-        + int_to_hex(int(header_dict['timestamp']), 4) \
-        + int_to_hex(int(header_dict['bits']), 4) \
-        + int_to_hex(int(header_dict['nonce']), 4)
+        + rev_hex(header_dict['merkle_root'])
+
+    # not legacy block
+    if header.get('block_height') >= constants.net.BTG_HEIGHT:
+        s += int_to_hex(header.get('block_height'), 4) \
+            + rev_hex(header.get('reserved'))
+    
+    s += int_to_hex(header.get('timestamp'), 4) \
+        + int_to_hex(header.get('bits'), 4)
+    
+    # legacy block
+    if header.get('block_height') < constants.net.BTG_HEIGHT:
+        s += rev_hex(header.get('nonce'))[:8]
+    else:
+        s += rev_hex(header.get('nonce')) \
+             + rev_hex(header.get('solution'))
+
     return s
 
 def deserialize_header(s: bytes, height: int) -> dict:
     if not s:
         raise InvalidHeader('Invalid header: {}'.format(s))
-    if len(s) != HEADER_SIZE:
-        raise InvalidHeader('Invalid header length: {}'.format(len(s)))
+
+    # original blok
+    if height < constants.net.BTG_HEIGHT:
+        if len(s) != constants.net.HEADER_SIZE_ORIGIN:
+            raise InvalidHeader('Invalid header length: {}'.format(len(s)))
+    else
+        if len(s) < constants.net.HEADER_SIZE_LEGACY:
+            raise InvalidHeader('Invalid header length: {}'.format(len(s)))
+    
     hex_to_int = lambda s: int.from_bytes(s, byteorder='little')
     h = {}
+    h['block_height'] = height
     h['version'] = hex_to_int(s[0:4])
     h['prev_block_hash'] = hash_encode(s[4:36])
     h['merkle_root'] = hash_encode(s[36:68])
-    h['timestamp'] = hex_to_int(s[68:72])
-    h['bits'] = hex_to_int(s[72:76])
-    h['nonce'] = hex_to_int(s[76:80])
-    h['block_height'] = height
+
+    # original block
+    if height < constants.net.BTG_HEIGHT:
+        h['timestamp'] = hex_to_int(s[68:72])
+        h['bits'] = hex_to_int(s[72:76])
+        h['nonce'] = hex_to_int(s[76:80])
+    else
+        h['reserved'] = hash_encode(s[72:100])
+        h['timestamp'] = hex_to_int(s[100:104])
+        h['bits'] = hex_to_int(s[104:108])
+        h['nonce'] = hex_to_int(s[108:140])
+        h['solution'] = hash_encode(s[140:])
+
     return h
 
 def hash_header(header: dict) -> str:

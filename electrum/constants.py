@@ -65,6 +65,9 @@ class AbstractNet:
     EQUIHASH_PARAMS = EquihashParams(n=200, k=9, personalization=b'ZcashPoW')
     EQUIHASH_PARAMS_FORK = EquihashParams(n=144, k=5, personalization=b'BgoldPoW')
 
+    HEADER_SIZE_ORIGIN = 80
+    HEADER_SIZE_LEGACY = 141
+    
     CHUNK_SIZE = 252
 
     @classmethod
