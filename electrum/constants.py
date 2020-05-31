@@ -171,7 +171,7 @@ class BitcoinGoldTestnet(AbstractNet):
         'p2wpkh': 0x045f1cf6,       # vpub
         'p2wsh': 0x02575483,        # Vpub
     }
-    XPRV_HEADERS_INV = inv_dict(XPRV_HEADERS)
+    XPUB_HEADERS_INV = inv_dict(XPUB_HEADERS)
 
     BIP44_COIN_TYPE = 1
     LN_REALM_BYTE = 1
