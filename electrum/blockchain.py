@@ -76,7 +76,7 @@ def deserialize_header(s: bytes, height: int) -> dict:
     if height < constants.net.BTG_HEIGHT:
         if len(s) != constants.net.HEADER_SIZE_ORIGIN:
             raise InvalidHeader('Invalid header length: {}'.format(len(s)))
-    else
+    else:
         if len(s) < constants.net.HEADER_SIZE_LEGACY:
             raise InvalidHeader('Invalid header length: {}'.format(len(s)))
     
@@ -92,7 +92,7 @@ def deserialize_header(s: bytes, height: int) -> dict:
         h['timestamp'] = hex_to_int(s[68:72])
         h['bits'] = hex_to_int(s[72:76])
         h['nonce'] = hex_to_int(s[76:80])
-    else
+    else:
         h['reserved'] = hash_encode(s[72:100])
         h['timestamp'] = hex_to_int(s[100:104])
         h['bits'] = hex_to_int(s[104:108])
