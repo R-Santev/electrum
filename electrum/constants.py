@@ -72,6 +72,8 @@ class AbstractNet:
     
     CHUNK_SIZE = 252
 
+    SIGHASH_FORK_BTG = 0x4f40
+
     @classmethod
     def max_checkpoint(cls) -> int:
         return max(0, len(cls.CHECKPOINTS) * 2016 - 1)
