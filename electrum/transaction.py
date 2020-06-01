@@ -1851,9 +1851,9 @@ class PartialTransaction(Transaction):
         inputs = self.inputs()
         outputs = self.outputs()
         txin = inputs[txin_index]
-        sighash = txin.sighash if txin.sighash is not None else SIGHASH_ALL
-        if sighash != SIGHASH_ALL:
-            raise Exception("only SIGHASH_ALL signing is supported!")
+        if txin.sighash is None
+            raise Exception("SigHash of txin couldn't be None!")
+        sighash = txin.sighash | SIGHASH_ALL | constants.net.SIGHASH_FORK_BTG
         nHashType = int_to_hex(sighash, 4)
         preimage_script = self.get_preimage_script(txin)
         if txin.is_segwit():
