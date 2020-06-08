@@ -1769,7 +1769,7 @@ class PartialTransaction(Transaction):
         inputs = self.inputs()
         outputs = self.outputs()
         txin = inputs[txin_index]
-        if txin.sighash is None
+        if txin.sighash is None:
             raise Exception("SigHash of txin couldn't be None!")
         sighash = txin.sighash | SIGHASH_ALL | constants.net.SIGHASH_FORK_BTG
         nHashType = int_to_hex(sighash, 4)
