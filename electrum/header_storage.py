@@ -83,19 +83,22 @@ class HeaderStorage(Logger):
             self.logger.warning(f"block at height {height} doesn't exist")
             return None
 
+    def delete_header(self, height: int) -> None:
+        self.db.Delete(to_bytes(str(height)))
+
     # header mast be continuous
     def save_header_chunk(self, headerlist: list) -> None:
         if len(headerlist) == 0:
             return None
         
         last_height = headerlist[0]['block_height']
-        for header in headerlist:
+        for header in headerlist[1:]:
             if(header['block_height'] - last_height == 1):
                 last_height = header['block_height']
             else:
                 raise HeaderStorageNotContinuousError('header is not continuous during save chunk header')
                 
-        batch = self.db.WriteBatch()
+        batch = leveldb.WriteBatch()
         for header in headerlist:
             batch.Put(to_bytes(str(header['block_height'])), bfh(blockchain.serialize_header(header)))
         self.db.Write(batch, sync=True)
@@ -109,17 +112,39 @@ class HeaderStorage(Logger):
             return None
         
         last_height = heightlist[0]
-        for height in heightlist:
+        for height in heightlist[1:]:
             if(height - last_height == 1):
                 last_height = height
             else:
                 raise HeaderStorageNotContinuousError('height is not continuous during read chunk header')
  
         headerlist = []
-        for bheight, bheader in self.db.RangeIter():
-            headerlist.append(blockchain.deserialize_header(bheader, int.from_bytes(bheight)))
-        
+        for height in heightlist:
+            try:
+                bheader = self.db.Get(to_bytes(str(height)))
+                headerlist.append(blockchain.deserialize_header(bheader, height))
+            except KeyError:
+                self.logger.warning(f"block at height {height} doesn't exist")
+                return None
+
         return headerlist
+
+    # height mast be continuous
+    def delete_header_chunk(self, heightlist: list) -> None:
+        if len(heightlist) == 0:
+            return None
+        
+        last_height = heightlist[0]
+        for height in heightlist[1:]:
+            if(height - last_height == 1):
+                last_height = height
+            else:
+                raise HeaderStorageNotContinuousError('height is not continuous during read chunk header')
+     
+        batch = leveldb.WriteBatch()
+        for height in heightlist:
+            self.db.Delete(to_bytes(str(height)))
+        self.db.Write(batch, sync=True)
 
     def get_latest() -> int:
         return self.latest
