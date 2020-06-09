@@ -3,7 +3,7 @@ import unittest
 from typing import NamedTuple
 
 from electrum.util import to_bytes, bh2u
-from electrum.header_storage import HeaderStorage
+from electrum.header_storage import HeaderStorage, HeaderStorageNotContinuousError
 
 
 class HeaderCase(NamedTuple):
@@ -60,6 +60,7 @@ HEADER_TEST_CASES = [
     )
 ]
 
+
 class Test_HeaderStorage(unittest.TestCase):
 
     def test_create_header_storage(self):
@@ -90,11 +91,64 @@ class Test_HeaderStorage(unittest.TestCase):
         shutil.rmtree('./test3.db')
 
     def test_save_header_chunk(self):
-        pass
+        db = HeaderStorage('./test4.db')
+
+        db.save_header_chunk([HEADER_TEST_CASES[0].data, HEADER_TEST_CASES[1].data, HEADER_TEST_CASES[2].data])
+        self.assertEqual(HEADER_TEST_CASES[0].hex, bh2u(db.db.Get(to_bytes(str(HEADER_TEST_CASES[0].height)))))
+        self.assertEqual(HEADER_TEST_CASES[1].hex, bh2u(db.db.Get(to_bytes(str(HEADER_TEST_CASES[1].height)))))
+        self.assertEqual(HEADER_TEST_CASES[2].hex, bh2u(db.db.Get(to_bytes(str(HEADER_TEST_CASES[2].height)))))
+
+        with self.assertRaises(HeaderStorageNotContinuousError):
+            db.save_header_chunk([HEADER_TEST_CASES[0].data, HEADER_TEST_CASES[2].data])
+
+
+        shutil.rmtree('./test4.db')
 
     def test_read_header_chunk(self):
-        pass
+        db = HeaderStorage('./test5.db')
 
+        db.save_header_chunk([HEADER_TEST_CASES[0].data, HEADER_TEST_CASES[1].data, HEADER_TEST_CASES[2].data])
+        headerlist = db.read_header_chunk([HEADER_TEST_CASES[0].height, HEADER_TEST_CASES[1].height, HEADER_TEST_CASES[2].height])
+
+        self.assertEqual(headerlist[0]['block_height'], HEADER_TEST_CASES[0].height)
+        self.assertEqual(headerlist[1]['block_height'], HEADER_TEST_CASES[1].height)
+        self.assertEqual(headerlist[2]['block_height'], HEADER_TEST_CASES[2].height)
+
+        with self.assertRaises(HeaderStorageNotContinuousError):
+            headerlist = db.read_header_chunk([HEADER_TEST_CASES[0].height, HEADER_TEST_CASES[2].height])
+
+        shutil.rmtree('./test5.db')
+
+    def test_delete_header(self):
+        db = HeaderStorage('./test6.db')
+
+        db.save_header_chunk([HEADER_TEST_CASES[0].data, HEADER_TEST_CASES[1].data, HEADER_TEST_CASES[2].data])
+        db.delete_header(HEADER_TEST_CASES[0].height)
+        
+        self.assertEqual(HEADER_TEST_CASES[1].hex, bh2u(db.db.Get(to_bytes(str(HEADER_TEST_CASES[1].height)))))
+        self.assertEqual(HEADER_TEST_CASES[2].hex, bh2u(db.db.Get(to_bytes(str(HEADER_TEST_CASES[2].height)))))
+
+        with self.assertRaises(KeyError):
+            db.db.Get(to_bytes(str(HEADER_TEST_CASES[0].height)))
+
+        shutil.rmtree('./test6.db')
+
+    def test_delete_header_chunk(self):
+        db = HeaderStorage('./test7.db')
+
+        db.save_header_chunk([HEADER_TEST_CASES[0].data, HEADER_TEST_CASES[1].data, HEADER_TEST_CASES[2].data])
+        db.delete_header_chunk([HEADER_TEST_CASES[0].height, HEADER_TEST_CASES[1].height, HEADER_TEST_CASES[2].height])
+        
+        with self.assertRaises(KeyError):
+            db.db.Get(to_bytes(str(HEADER_TEST_CASES[0].height)))
+
+        with self.assertRaises(KeyError):
+            db.db.Get(to_bytes(str(HEADER_TEST_CASES[1].height)))
+
+        with self.assertRaises(KeyError):
+            db.db.Get(to_bytes(str(HEADER_TEST_CASES[2].height)))
+
+        shutil.rmtree('./test7.db')
 
 if __name__ == '__main__':
     unittest.main()
