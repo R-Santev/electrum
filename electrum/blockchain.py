@@ -178,7 +178,10 @@ def read_blockchains(config: 'SimpleConfig'):
 
     def delete_chain(filename, reason):
         _logger.info(f"[blockchain] deleting chain {filename}: {reason}")
-        os.unlink(os.path.join(fdir, filename))
+        if os.path.isdir(os.path.join(fdir, filename)):  # maybe leveldb data dir
+            os.rmdir(os.path.join(fdir, filename))
+        else:
+            os.unlink(os.path.join(fdir, filename))
 
     def instantiate_chain(filename):
         __, forkpoint, prev_hash, first_hash = filename.split('_')
@@ -520,7 +523,7 @@ class Blockchain(Logger):
             return
         if height < self.forkpoint:
             return self.parent.read_header(height)
-        if height > self.height:
+        if height > self.height():
             return
         
         return self.headerdb.read_header(height)
