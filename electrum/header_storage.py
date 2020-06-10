@@ -67,6 +67,9 @@ class HeaderStorage(Logger):
             return False
 
     def save_header(self, header: dict) -> None:
+
+        self.logger.debug(f"trying to save block header:{header}")
+
         if self._header_exist(header['block_height']):
             self.logger.warning(f"block at height {header['block_height']} already exist, will be overwrited")
 
@@ -76,6 +79,9 @@ class HeaderStorage(Logger):
             self.latest = header['block_height']
 
     def read_header(self, height: int) -> Optional[dict]:
+
+        self.logger.debug(f"trying to read block header at height {height}")
+
         try:
             bheader = self.db.Get(to_bytes(str(height)))
             return blockchain.deserialize_header(bheader, height)
@@ -146,7 +152,7 @@ class HeaderStorage(Logger):
             self.db.Delete(to_bytes(str(height)))
         self.db.Write(batch, sync=True)
 
-    def get_latest() -> int:
+    def get_latest(self) -> int:
         return self.latest
 
 
