@@ -591,19 +591,17 @@ class Interface(Logger):
         return blockchain.deserialize_header(bytes.fromhex(res), height)
 
     async def request_chunk(self, height: int, tip=None, *, can_return_early=False):
-        if not is_non_negative_integer(height):
-            raise Exception(f"{repr(height)} is not a block height")
-        index = height // 2016
+        index = height // constants.net.CHUNK_SIZE
         if can_return_early and index in self._requested_chunks:
             return
         self.logger.info(f"requesting chunk from height {height}")
-        size = 2016
+        size = constants.net.CHUNK_SIZE
         if tip is not None:
-            size = min(size, tip - index * 2016 + 1)
+            size = min(size, tip - index * constants.net.CHUNK_SIZE + 1)
             size = max(size, 0)
         try:
             self._requested_chunks.add(index)
-            res = await self.session.send_request('blockchain.block.headers', [index * 2016, size])
+            res = await self.session.send_request('blockchain.block.headers', [index * constants.net.CHUNK_SIZE, size])
         finally:
             self._requested_chunks.discard(index)
         assert_dict_contains_field(res, field_name='count')
@@ -747,7 +745,7 @@ class Interface(Logger):
                     last, height = await self.step(height)
                     continue
                 util.trigger_callback('network_updated')
-                height = (height // 2016 * 2016) + num_headers
+                height = (height // constants.net.CHUNK_SIZE * constants.net.CHUNK_SIZE) + num_headers
                 assert height <= next_height+1, (height, self.tip)
                 last = 'catchup'
             else:
