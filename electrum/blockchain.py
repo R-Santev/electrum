@@ -30,7 +30,7 @@ from . import util
 from .bitcoin import hash_encode, int_to_hex, rev_hex
 from .crypto import sha256d
 from . import constants
-from .util import bfh, bh2u
+from .util import bfh, bh2u, to_bytes
 from .simple_config import SimpleConfig
 from .logging import get_logger, Logger
 
@@ -98,8 +98,10 @@ def serialize_header(header_dict: dict) -> str:
     
     # legacy block
     if header_dict.get('block_height') < constants.net.BTG_HEIGHT:
+        # Bitcoin header nonce is 32 bits
         s += rev_hex(header_dict.get('nonce'))[:8]
     else:
+        # Bitcoin Gold header nonce is 256 bits
         s += rev_hex(header_dict.get('nonce')) \
              + rev_hex(header_dict.get('solution'))
 
@@ -128,14 +130,14 @@ def deserialize_header(s: bytes, height: int) -> dict:
     if height < constants.net.BTG_HEIGHT:
         h['timestamp'] = hex_to_int(s[68:72])
         h['bits'] = hex_to_int(s[72:76])
-        h['nonce'] = hex_to_int(s[76:80])
+        h['nonce'] = hash_encode(s[76:80])
     else:
         h['reserved'] = hash_encode(s[72:100])
         h['timestamp'] = hex_to_int(s[100:104])
         h['bits'] = hex_to_int(s[104:108])
-        h['nonce'] = hex_to_int(s[108:140])
+        h['nonce'] = hash_encode(s[108:140])
         h['solution'] = hash_encode(s[140:])
-
+    
     return h
 
 def hash_header(header: dict) -> str:
@@ -796,12 +798,12 @@ class Blockchain(Logger):
     def get_chainwork(self, height=None) -> int:
         pass
 
-    def can_connect(self, header, check_height=True):
+    def can_connect(self, header: dict, check_height: bool=True):
         if header is None:
             return False
         height = header['block_height']
         if check_height and self.height() != height - 1:
-            self.logger.error(f'cannot connect at height {height}')
+            self.logger.error(f'cannot connect at height {height}, because chain height != height - 1')
             return False
         if height == 0:
             return hash_header(header, height) == constants.net.GENESIS
@@ -810,11 +812,13 @@ class Blockchain(Logger):
         except:
             return False
         if prev_hash != header.get('prev_block_hash'):
+            self.logger.error(f'cannot connect at height {height}, because pre_block_hash check failed')
             return False
         target = self.get_target(height, {height: header})
         try:
             self.verify_header(header, prev_hash, target, None)
         except BaseException as e:
+            self.logger.error(f'cannot connect at height {height}, because verify header failed')
             return False
         return True
 
