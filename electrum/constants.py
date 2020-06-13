@@ -79,6 +79,18 @@ class AbstractNet:
         return max(0, len(cls.CHECKPOINTS) * 2016 - 1)
 
     @classmethod
+    def get_checkpoint_hash(cls, height) -> str:
+        def is_height_checkpoint():
+            within_cp_range = height <= cls.max_checkpoint()
+            at_chunk_boundary = (height+1) % 2016 == 0
+            return within_cp_range and at_chunk_boundary
+
+        if is_height_checkpoint():
+            index = height // 2016
+            h, t = cls.CHECKPOINTS[index]
+            return h
+
+    @classmethod
     def rev_genesis_bytes(cls) -> bytes:
         return bytes.fromhex(bitcoin.rev_hex(cls.GENESIS))
 
@@ -128,6 +140,8 @@ class BitcoinGoldMainnet(AbstractNet):
         'nodes.lightning.directory.',
         'lseed.bitcoinstats.com.',
     ]
+
+    MAX_CHECKPOINT_HEADER = None
 
 class BitcoinGoldTestnet(AbstractNet):
     TESTNET = True
@@ -181,6 +195,18 @@ class BitcoinGoldTestnet(AbstractNet):
         #'lseed.bitcoinstats.com.',  # ignores REALM byte and returns mainnet peers...
     ]
 
+    MAX_CHECKPOINT_HEADER = {
+        'version': 536870912,
+        'prev_block_hash': '00078c55b0972a70d6920cab734c9043d7916fd82dfe7e832455662ff3334c7a',
+        'merkle_root': '8a45ebd0c4895c35b98cae7a6ed950c99301e3995283e36fb1f9a8d8f4cce51a',
+        'block_height': 78623,
+        'reserved': '00000000000000000000000000000000000000000000000000000000',
+        'timestamp': 1591897081,
+        'bits': 0x1f07ffff,
+        'nonce': '0000052d0000000000000000000000000000000000000000000000000004198f',
+        'solution':'0d628f363b74106f99d1d867840980ab9b54f6f0ed53f8a1c35d5a2c36ed4f3924137fd914e8d21ed7d64656f3cb1dd553f715af4ac5a883466c1f4e62fce7ca33d744d8539e48f3d2dfdb2d290e4254260edcc7c843ac433354b1d14ce9687683225dac'
+    }
+
 class BitcoinGoldRegtest(AbstractNet):
     REGTEST = True
 
@@ -221,6 +247,8 @@ class BitcoinGoldRegtest(AbstractNet):
         'p2wpkh': 0x045f1cf6,       # vpub
         'p2wsh': 0x02575483,        # Vpub
     }
+
+    MAX_CHECKPOINT_HEADER = None
 
 # don't import net directly, import the module instead (so that net is singleton)
 net = BitcoinGoldTestnet

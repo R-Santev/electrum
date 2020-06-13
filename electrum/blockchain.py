@@ -159,18 +159,19 @@ blockchains_lock = threading.RLock()
 
 def read_blockchains(config: 'SimpleConfig'):
     best_chain = Blockchain(config=config,
-                            forkpoint=0,
+                            forkpoint=constants.net.max_checkpoint(),
                             parent=None,
-                            forkpoint_hash=constants.net.GENESIS,
+                            forkpoint_hash=constants.net.get_checkpoint_hash(constants.net.max_checkpoint()),
                             prev_hash=None)
-    blockchains[constants.net.GENESIS] = best_chain
+    best_chain.save_header(constants.net.MAX_CHECKPOINT_HEADER)
+    blockchains[constants.net.get_checkpoint_hash(constants.net.max_checkpoint())] = best_chain
     # consistency checks
     if best_chain.height() > constants.net.max_checkpoint():
         header_after_cp = best_chain.read_header(constants.net.max_checkpoint()+1)
         if not header_after_cp or not best_chain.can_connect(header_after_cp, check_height=False):
             _logger.info("[blockchain] deleting best chain. cannot connect header after last cp to last cp.")
             os.unlink(best_chain.path())
-            # best_chain.update_size()
+            best_chain.update_size()
     # forks
     fdir = os.path.join(util.get_headers_dir(config), 'forks')
     util.make_dir(fdir)
@@ -223,7 +224,7 @@ def read_blockchains(config: 'SimpleConfig'):
 
 
 def get_best_chain() -> 'Blockchain':
-    return blockchains[constants.net.GENESIS]
+    return blockchains[constants.net.get_checkpoint_hash(constants.net.max_checkpoint())]
 
 # block hash -> chain work; up to and including that block
 _CHAINWORK_CACHE = {
@@ -247,12 +248,12 @@ class Blockchain(Logger):
         assert isinstance(forkpoint_hash, str) and len(forkpoint_hash) == 64, forkpoint_hash
         assert (prev_hash is None) or (isinstance(prev_hash, str) and len(prev_hash) == 64), prev_hash
         # assert (parent is None) == (forkpoint == 0)
-        if 0 < forkpoint <= constants.net.max_checkpoint():
+        if 0 < forkpoint < constants.net.max_checkpoint():
             raise Exception(f"cannot fork below max checkpoint. forkpoint: {forkpoint}")
         Logger.__init__(self)
         self.config = config
         self.forkpoint = forkpoint  # height of first header
-        self.bestheight = forkpoint # header count of current chain is (bestheight - forkpoint + 1)
+        self._height = forkpoint # latest height of current chain
         self.parent = parent
         self._forkpoint_hash = forkpoint_hash  # blockhash at forkpoint. "first hash"
         self._prev_hash = prev_hash  # blockhash immediately before forkpoint
@@ -349,7 +350,8 @@ class Blockchain(Logger):
 
     @with_lock
     def height(self) -> int:
-        return self.headerdb.get_latest()
+        # return self.headerdb.get_latest()
+        return self._height
 
     # @with_lock
     # def size(self) -> int:
@@ -357,7 +359,10 @@ class Blockchain(Logger):
 
     @with_lock
     def update_size(self) -> None:
-        pass
+        latest = self.headerdb.get_latest()
+        # restore _height if this is not the first time runing
+        if latest != 0 and latest > self.forkpoint:
+            self._height = latest
 
     def verify_header(cls, header: dict, prev_hash: str, target: int, expected_header_hash: str=None) -> None:
         _hash = hash_header(header)
@@ -365,7 +370,7 @@ class Blockchain(Logger):
             raise Exception("hash mismatches with expected: {} vs {}".format(expected_header_hash, _hash))
         if prev_hash != header.get('prev_block_hash'):
             raise Exception("prev hash mismatch: %s vs %s" % (prev_hash, header.get('prev_block_hash')))
-        if constants.net.TESTNET:
+        if constants.net == constants.BitcoinGoldTestnet or constants.net == constants.BitcoinGoldRegtest:
             return
         bits = cls.target_to_bits(target)
         if bits != header.get('bits'):
@@ -518,18 +523,24 @@ class Blockchain(Logger):
     
     @with_lock
     def save_header(self, header: dict) -> None:
-        delta = header.get('block_height') - self.forkpoint
-        # headers are only _appended_ to the end:
-        assert delta == self.size(), (delta, self.size())
+        height = header.get('block_height')
+        # headers are only _appended_ to the end if header is not forkpoint header to saved of the chain:
+        if (height != self.forkpoint):
+            assert (height == (self._height + 1)), (height, self._height)
 
         self.headerdb.save_header(header)
+        self.logger.info(f'saved header into database at height: {height}')
         self.swap_with_parent()
+        if self._height < height:
+            self._height = height
 
     @with_lock
     def read_header(self, height: int) -> Optional[dict]:
         if height < 0:
             return
         if height < self.forkpoint:
+            if self.parent is None:
+                return
             return self.parent.read_header(height)
         if height > self.height():
             return
@@ -631,10 +642,10 @@ class Blockchain(Logger):
         last_height = (height - 1)
         last = self.get_header(last_height, headers)
 
-        if constants.net.REGTEST:
+        if constants.net == constants.BitcoinGoldRegtest:
             new_target = self.bits_to_target(last.get('bits'))
         elif height % difficulty_adjustment_interval() != 0:
-            if constants.net.TESTNET:
+            if constants.net == constants.BitcoinGoldTestnet:
                 cur = self.get_header(height, headers)
 
                 # Special testnet handling
@@ -673,9 +684,9 @@ class Blockchain(Logger):
         last = self.get_header(last_height, headers)
 
         # Special testnet handling
-        if constants.net.REGTEST:
+        if constants.net == constants.BitcoinGoldRegtest:
             new_target = self.bits_to_target(last.get('bits'))
-        elif constants.net.TESTNET and cur.get('timestamp') > last.get('timestamp') + constants.net.POW_TARGET_SPACING * 2:
+        elif constants.net == constants.BitcoinGoldTestnet and cur.get('timestamp') > last.get('timestamp') + constants.net.POW_TARGET_SPACING * 2:
             new_target = constants.net.POW_LIMIT
         else:
             total = 0
@@ -814,6 +825,14 @@ class Blockchain(Logger):
         if prev_hash != header.get('prev_block_hash'):
             self.logger.error(f'cannot connect at height {height}, because pre_block_hash check failed')
             return False
+
+        if constants.net == constants.BitcoinGoldRegtest or constants.net == constants.BitcoinGoldTestnet:
+            return True
+
+        # do not check targt of headers before equihash fork 
+        if height < constants.net.EQUIHASH_FORK_HEIGHT:
+            return True
+        
         target = self.get_target(height, {height: header})
         try:
             self.verify_header(header, prev_hash, target, None)
