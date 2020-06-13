@@ -31,6 +31,7 @@ import leveldb
 from .logging import Logger
 from . import blockchain
 from .util import profiler, to_bytes, to_string, bfh, standardize_path
+from .bitcoin import int_to_hex, rev_hex
 
 def Singleton(cls):
     _instance = {}
@@ -57,7 +58,6 @@ class HeaderStorage(Logger):
         self._file_exists = bool(self.path and os.path.exists(self.path))
         self.logger.info(f"header path {self.path}")
         self.db = leveldb.LevelDB(self.path)
-        self.latest = 0
 
     def _header_exist(self, height: int) -> bool:
         try:
@@ -67,16 +67,14 @@ class HeaderStorage(Logger):
             return False
 
     def save_header(self, header: dict) -> None:
-
-        self.logger.debug(f"trying to save block header:{header}")
-
         if self._header_exist(header['block_height']):
-            self.logger.warning(f"block at height {header['block_height']} already exist, will be overwrited")
+            self.logger.warning(f"block at height {header['block_height']} already exist, will be ignored")
+            return
 
         self.db.Put(to_bytes(str(header['block_height'])), bfh(blockchain.serialize_header(header)))
         
-        if header['block_height'] > self.latest:
-            self.latest = header['block_height']
+        if header['block_height'] > self.get_latest():
+            self.set_latest(header['block_height'])
 
     def read_header(self, height: int) -> Optional[dict]:
 
@@ -109,8 +107,8 @@ class HeaderStorage(Logger):
             batch.Put(to_bytes(str(header['block_height'])), bfh(blockchain.serialize_header(header)))
         self.db.Write(batch, sync=True)
 
-        if headerlist[-1]['block_height'] > self.latest:
-            self.latest = headerlist[-1]['block_height']
+        if headerlist[-1]['block_height'] > self.get_latest():
+            self.set_latest(headerlist[-1]['block_height'])
     
     # height mast be continuous
     def read_header_chunk(self, heightlist: list) -> Optional[list]:
@@ -152,7 +150,14 @@ class HeaderStorage(Logger):
             self.db.Delete(to_bytes(str(height)))
         self.db.Write(batch, sync=True)
 
+    def set_latest(self, height: int):
+        self.db.Put(to_bytes('latest'), bfh(int_to_hex(height, 4)))
+
     def get_latest(self) -> int:
-        return self.latest
+        try:
+            bheight = self.db.Get(to_bytes('latest'))
+            return int.from_bytes(bheight, byteorder='little')
+        except KeyError:
+            return 0
 
 
