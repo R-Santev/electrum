@@ -706,6 +706,7 @@ class Interface(Logger):
             raw_header = item[0]
             height = raw_header['height']
             header = blockchain.deserialize_header(bfh(raw_header['hex']), height)
+            self.logger.info(f"blockchain.headers.subscribe return new block at {height}")
             self.tip_header = header
             self.tip = height
             if self.tip < constants.net.max_checkpoint():
