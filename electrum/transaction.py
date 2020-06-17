@@ -1770,11 +1770,16 @@ class PartialTransaction(Transaction):
         outputs = self.outputs()
         txin = inputs[txin_index]
         if txin.sighash is None:
-            raise Exception("SigHash of txin couldn't be None!")
+            txin.sighash = 0
+            # raise Exception("SigHash of txin couldn't be None!")
         sighash = txin.sighash | SIGHASH_ALL | constants.net.SIGHASH_FORK_BTG
         nHashType = int_to_hex(sighash, 4)
         preimage_script = self.get_preimage_script(txin)
-        if self.is_segwit_input(txin):
+
+        def is_bip143_input(txin) -> bool:
+            return True
+
+        if is_bip143_input(txin):
             if bip143_shared_txdigest_fields is None:
                 bip143_shared_txdigest_fields = self._calc_bip143_shared_txdigest_fields()
             hashPrevouts = bip143_shared_txdigest_fields.hashPrevouts
@@ -1783,7 +1788,7 @@ class PartialTransaction(Transaction):
             outpoint = txin.prevout.serialize_to_network().hex()
             scriptCode = var_int(len(preimage_script) // 2) + preimage_script
             amount = int_to_hex(txin.value_sats(), 8)
-            nSequence = int_to_hex(txin.nsequence, 4)
+            nSequence = int_to_hex(0xfffffffd, 4)
             preimage = nVersion + hashPrevouts + hashSequence + outpoint + scriptCode + amount + nSequence + hashOutputs + nLocktime + nHashType
         else:
             txins = var_int(len(inputs)) + ''.join(self.serialize_input(txin, preimage_script if txin_index==k else '')
@@ -1817,7 +1822,7 @@ class PartialTransaction(Transaction):
                                                        bip143_shared_txdigest_fields=bip143_shared_txdigest_fields)))
         privkey = ecc.ECPrivkey(privkey_bytes)
         sig = privkey.sign_transaction(pre_hash)
-        sig = bh2u(sig) + '01'  # SIGHASH_ALL
+        sig = bh2u(sig) + '41'  # SIGHASH_ALL ｜ SIGHASH_FORK_BTG
         return sig
 
     def is_complete(self) -> bool:
