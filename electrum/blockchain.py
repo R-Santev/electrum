@@ -79,6 +79,42 @@ def get_header_size(height):
 
     return size
 
+def var_int(i):
+    # https://en.bitcoin.it/wiki/Protocol_specification#Variable_length_integer
+    if i < 0xfd:
+        return int_to_hex(i)
+    elif i <= 0xffff:
+        return "fd"+int_to_hex(i, 2)
+    elif i <= 0xffffffff:
+        return "fe"+int_to_hex(i, 4)
+    else:
+        return "ff"+int_to_hex(i, 8)
+
+
+def var_int_read(value, start):
+    size = value[start]
+    start += 1
+
+    if size == 253:
+        (size,) = unpack_from('<H', value, start)
+        start += 2
+    elif size == 254:
+        (size,) = unpack_from('<I', value, start)
+        start += 4
+    elif size == 255:
+        (size,) = unpack_from('<Q', value, start)
+        start += 8
+
+    return start, size
+
+
+def uint256_from_bytes(s):
+    r = 0
+    t = unpack("<IIIIIIII", s[:32])
+    for i in range(8):
+        r += t[i] << (i * 32)
+    return r
+
 def get_equihash_params(height):
     return constants.net.EQUIHASH_PARAMS if height < constants.net.EQUIHASH_FORK_HEIGHT \
         else constants.net.EQUIHASH_PARAMS_FORK
@@ -389,7 +425,7 @@ class Blockchain(Logger):
     # verify chunk and return verified headers contained by this chunk
     def verify_chunk(self, index: int, data: bytes) -> list:
 
-        height = idx * constants.net.CHUNK_SIZE
+        height = index * constants.net.CHUNK_SIZE
         size = len(data)
         offset = 0
         prev_hash = self.get_hash(height-1)
