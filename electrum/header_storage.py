@@ -77,9 +77,6 @@ class HeaderStorage(Logger):
             self.set_latest(header['block_height'])
 
     def read_header(self, height: int) -> Optional[dict]:
-
-        self.logger.debug(f"trying to read block header at height {height}")
-
         try:
             bheader = self.db.Get(to_bytes(str(height)))
             return blockchain.deserialize_header(bheader, height)
