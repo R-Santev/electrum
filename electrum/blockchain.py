@@ -31,8 +31,10 @@ from .bitcoin import hash_encode, int_to_hex, rev_hex
 from .crypto import sha256d
 from . import constants
 from .util import bfh, bh2u, to_bytes
+from struct import unpack_from, unpack
 from .simple_config import SimpleConfig
 from .logging import get_logger, Logger
+from .equihash import is_gbp_valid
 
 
 _logger = get_logger(__name__)
@@ -571,10 +573,16 @@ class Blockchain(Logger):
             self._height = height
 
     @with_lock
+    def save_header_without_update(self, header: dict) -> None:
+        height = header.get('block_height')
+        self.headerdb.save_header(header)
+        self.logger.info(f'saved header into database at height: {height}')
+
+    @with_lock
     def read_header(self, height: int) -> Optional[dict]:
         if height < 0:
             return
-        if height < self.forkpoint:
+        if height < (self.forkpoint - constants.net.LWMA_AVERAGING_WINDOW):
             if self.parent is None:
                 return
             return self.parent.read_header(height)
@@ -636,7 +644,7 @@ class Blockchain(Logger):
         if height == 0:
             new_target = constants.net.POW_LIMIT_LEGACY
         # Check for valid checkpoint
-        elif height % difficulty_adjustment_interval() == 0 and 0 <= ((height // difficulty_adjustment_interval()) - 1) < len(self.checkpoints):
+        elif (height + 1) % difficulty_adjustment_interval() == 0 and 0 <= (((height + 1) // difficulty_adjustment_interval()) - 1) < len(self.checkpoints):
             h, t = self.checkpoints[((height // difficulty_adjustment_interval()) - 1)]
             new_target = t
         # Check for prefork
@@ -767,7 +775,7 @@ class Blockchain(Logger):
 
         if last is None:
             new_target = pow_limit
-        elif constants.net.REGTEST:
+        elif constants.net == constants.BitcoinGoldRegtest:
             new_target = self.bits_to_target(last.get('bits'))
         else:
             first = last
@@ -820,24 +828,33 @@ class Blockchain(Logger):
 
     @classmethod
     def bits_to_target(cls, bits: int) -> int:
-        bitsN = (bits >> 24) & 0xff
-        if not (0x03 <= bitsN <= 0x1d):
-            raise Exception("First part of bits should be in [0x03, 0x1d]")
-        bitsBase = bits & 0xffffff
-        if not (0x8000 <= bitsBase <= 0x7fffff):
-            raise Exception("Second part of bits should be in [0x8000, 0x7fffff]")
-        return bitsBase << (8 * (bitsN-3))
+        size = bits >> 24
+        word = bits & 0x007fffff
+
+        if size <= 3:
+            word >>= 8 * (3 - size)
+            ret = word
+        else:
+            ret = word
+            ret <<= 8 * (size - 3)
+
+        return ret
 
     @classmethod
     def target_to_bits(cls, target: int) -> int:
-        c = ("%064x" % target)[2:]
-        while c[:2] == '00' and len(c) > 6:
-            c = c[2:]
-        bitsN, bitsBase = len(c) // 2, int.from_bytes(bfh(c[:6]), byteorder='big')
-        if bitsBase >= 0x800000:
-            bitsN += 1
-            bitsBase >>= 8
-        return bitsN << 24 | bitsBase
+        assert target >= 0
+        nsize = (target.bit_length() + 7) // 8
+        if nsize <= 3:
+            c = target << (8 * (3 - nsize))
+        else:
+            c = target >> (8 * (nsize - 3))
+        if c & 0x00800000:
+            c >>= 8
+            nsize += 1
+        assert (c & ~0x007fffff) == 0
+        assert nsize < 256
+        c |= nsize << 24
+        return c
 
     def chainwork_of_header_at_height(self, height: int) -> int:
         pass
@@ -873,7 +890,7 @@ class Blockchain(Logger):
         try:
             self.verify_header(header, prev_hash, target, None)
         except BaseException as e:
-            self.logger.error(f'cannot connect at height {height}, because verify header failed')
+            self.logger.error(f'cannot connect at height {height}, because verify header failed: {e}')
             return False
         return True
 
