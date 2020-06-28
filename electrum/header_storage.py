@@ -75,6 +75,7 @@ class HeaderStorage(Logger):
         
         if header['block_height'] > self.get_latest():
             self.set_latest(header['block_height'])
+            self.logger.info(f"latest height of header storage update to {header['block_height']}")
 
     def read_header(self, height: int) -> Optional[dict]:
         try:
@@ -102,10 +103,14 @@ class HeaderStorage(Logger):
         batch = leveldb.WriteBatch()
         for header in headerlist:
             batch.Put(to_bytes(str(header['block_height'])), bfh(blockchain.serialize_header(header)))
+
         self.db.Write(batch, sync=True)
+
+        self.logger.info(f"{len(headerlist)} blocks saved into header storage")
 
         if headerlist[-1]['block_height'] > self.get_latest():
             self.set_latest(headerlist[-1]['block_height'])
+            self.logger.info(f"latest height of header storage update to {headerlist[-1]['block_height']}")
     
     # height mast be continuous
     def read_header_chunk(self, heightlist: list) -> Optional[list]:
