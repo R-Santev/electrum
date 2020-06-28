@@ -141,7 +141,17 @@ class BitcoinGoldMainnet(AbstractNet):
         'lseed.bitcoinstats.com.',
     ]
 
-    MAX_CHECKPOINT_HEADER = None
+    MAX_CHECKPOINT_HEADER = {
+        'version': 536870912,
+        'prev_block_hash': '0000000754e41450d904adea2910d4fe4491afbc47f5ef25acb31e38dd5a95ab',
+        'merkle_root': 'b84d183572ede51e2c2fd1ff0881156f35a760928bb1a3054abac9c8726e37e7',
+        'block_height': 637055,
+        'reserved': '00000000000000000000000000000000000000000000000000000000',
+        'timestamp': 1591480549,
+        'bits': 0x1d086483,
+        'nonce': '0003089300000003000000000000000000000000000000009de9020000000001',
+        'solution':'01e3dbdbfddf61dcf23b751140bb4ef0bcf34c46e3fe532ec8242148c93b4359776a72504d82e40dc74d7bf965f7b78dcabb044209183b57f37819bfd7fe52080c442843eb1387c3b8be9a0826e4b521d147514ba916060296bb958b0fbea2b2bdbea46a'
+    }
 
 class BitcoinGoldTestnet(AbstractNet):
     TESTNET = True
@@ -251,7 +261,7 @@ class BitcoinGoldRegtest(AbstractNet):
     MAX_CHECKPOINT_HEADER = None
 
 # don't import net directly, import the module instead (so that net is singleton)
-net = BitcoinGoldTestnet
+net = BitcoinGoldMainnet
 
 def set_simnet():
     global net
