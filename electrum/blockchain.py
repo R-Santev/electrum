@@ -210,6 +210,7 @@ def read_blockchains(config: 'SimpleConfig'):
             _logger.info("[blockchain] deleting best chain. cannot connect header after last cp to last cp.")
             os.unlink(best_chain.path())
             best_chain.update_size()
+    
     # forks
     fdir = os.path.join(util.get_headers_dir(config), 'forks')
     util.make_dir(fdir)
@@ -362,7 +363,7 @@ class Blockchain(Logger):
         except Exception:
             return False
 
-    def fork(parent, header: dict) -> 'Blockchain':
+    def fork(self, parent, header: dict) -> 'Blockchain':
         if not parent.can_connect(header, check_height=False):
             raise Exception("forking header does not connect to parent chain")
         forkpoint = header.get('block_height')
@@ -396,6 +397,7 @@ class Blockchain(Logger):
         if latest != 0 and latest > self.forkpoint:
             self._height = latest
 
+    @classmethod
     def verify_header(cls, header: dict, prev_hash: str, target: int, expected_header_hash: str=None) -> None:
         _hash = hash_header(header)
         if expected_header_hash and expected_header_hash != _hash:
@@ -425,9 +427,8 @@ class Blockchain(Logger):
                 raise Exception("Invalid equihash solution")
 
     # verify chunk and return verified headers contained by this chunk
-    def verify_chunk(self, index: int, data: bytes) -> list:
+    def verify_chunk(self, height: int, data: bytes) -> list:
 
-        height = index * constants.net.CHUNK_SIZE
         size = len(data)
         offset = 0
         prev_hash = self.get_hash(height-1)
@@ -436,11 +437,6 @@ class Blockchain(Logger):
         target = 0
 
         while offset < size:
-            try:
-                expected_header_hash = self.get_hash(height)
-            except MissingHeader:
-                expected_header_hash = None
-
             header_size = get_header_size(height)
             raw_header = data[offset:(offset + header_size)]
             header = deserialize_header(raw_header, height)
@@ -450,8 +446,8 @@ class Blockchain(Logger):
             if height > constants.net.EQUIHASH_FORK_HEIGHT and (needs_retarget(height) or target == 0):
                 target = self.get_target(height, headers)
 
-            self.verify_header(header, prev_hash, target, expected_header_hash)
-            prev_hash = hash_header(header, height)
+            self.verify_header(header, prev_hash, target, None)
+            prev_hash = hash_header(header)
             offset += header_size
             height += 1
 
@@ -470,20 +466,15 @@ class Blockchain(Logger):
             filename = os.path.join('forks', basename)
         return os.path.join(d, filename)
 
-    def save_chunk(self, index: int, headerlist: list) -> None:
+    def save_chunk(self, height: int, headerlist: list) -> None:
 
-        assert index >= 0, index
-        assert len(headerlist) == constants.net.CHUNK_SIZE
-
-        chunk_within_checkpoint_region = index < len(self.checkpoints)
+        chunk_within_checkpoint_region = (height + len(headerlist)) < len(self.checkpoints)
         # chunks in checkpoint region are the responsibility of the 'main chain'
-        if chunk_within_checkpoint_region and self.parent is not None:
-            main_chain = get_best_chain()
-            main_chain.save_chunk(index, headerlist)
+        if chunk_within_checkpoint_region:
             return
 
         self.headerdb.save_header_chunk(headerlist)
-        self.swap_with_parent()
+        self.update_size()
 
     def swap_with_parent(self) -> None:
         with self.lock, blockchains_lock:
@@ -562,9 +553,7 @@ class Blockchain(Logger):
 
         self.headerdb.save_header(header)
         self.logger.info(f'saved header into database at height: {height}')
-        self.swap_with_parent()
-        if self._height < height:
-            self._height = height
+        self.update_size()
 
     @with_lock
     def save_header_without_update(self, header: dict) -> None:
@@ -584,6 +573,13 @@ class Blockchain(Logger):
             return
         
         return self.headerdb.read_header(height)
+
+    @with_lock
+    def header_exist(self, height: int) -> bool:        
+        if self.headerdb.read_header(height) == None:
+            return False
+        else:
+            return True
 
     def header_at_tip(self) -> Optional[dict]:
         """Return latest header."""
@@ -864,7 +860,7 @@ class Blockchain(Logger):
             self.logger.error(f'cannot connect at height {height}, because chain height != height - 1')
             return False
         if height == 0:
-            return hash_header(header, height) == constants.net.GENESIS
+            return hash_header(header) == constants.net.GENESIS
         try:
             prev_hash = self.get_hash(height - 1)
         except:
@@ -888,30 +884,16 @@ class Blockchain(Logger):
             return False
         return True
 
-    def connect_chunk(self, idx: int, hexdata: str) -> bool:
-        assert idx >= 0, idx
+    def connect_chunk(self, height: int, hexdata: str) -> bool:
         try:
             data = bfh(hexdata)
-            headerlist = self.verify_chunk(idx, data)
-            self.logger.info(f'validated chunk, index: {idx} - verifed header size: {len(headerlist)}')
-            self.save_chunk(idx, headerlist)
+            headerlist = self.verify_chunk(height, data)
+            self.logger.info(f'validated chunk, start height: {height} - verifed header size: {len(headerlist)}')
+            self.save_chunk(height, headerlist)
             return True
         except BaseException as e:
-            self.logger.info(f'verify_chunk idx {idx} failed: {repr(e)}')
+            self.logger.info(f'verify_chunk from height {height} failed: {repr(e)}')
             return False
-
-    def get_checkpoints(self):
-        # for each chunk, store the hash of the last block and the target after the chunk
-        cp = []
-        n = self.height() // constants.net.CHUNK_SIZE
-        for index in range(n):
-            height = (index+1) * constants.net.CHUNK_SIZE -1
-            headerhash = self.get_hash(height)
-            header = self.read_header(height)
-            target = self.get_target(height, {height: header})
-            cp.append((h, target))
-        return cp
-
 
 def check_header(header: dict) -> Optional[Blockchain]:
     """Returns any Blockchain that contains header, or None."""
