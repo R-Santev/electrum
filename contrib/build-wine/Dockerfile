@@ -2,6 +2,8 @@ FROM ubuntu:18.04@sha256:b58746c8a89938b8c9f5b77de3b8cf1fe78210c696ab03a1442e235
 
 ENV LC_ALL=C.UTF-8 LANG=C.UTF-8
 
+COPY sources.list.aliyun /etc/apt/sources.list
+
 RUN dpkg --add-architecture i386 && \
     apt-get update -q && \
     apt-get install -qy \
