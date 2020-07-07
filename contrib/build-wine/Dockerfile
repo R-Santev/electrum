@@ -3,6 +3,8 @@ FROM ubuntu:20.04@sha256:c95a8e48bf88e9849f3e0f723d9f49fa12c5a00cfc6e60d2bc99d87
 ENV LC_ALL=C.UTF-8 LANG=C.UTF-8
 ENV DEBIAN_FRONTEND=noninteractive
 
+COPY sources.list.aliyun /etc/apt/sources.list
+
 RUN dpkg --add-architecture i386 && \
     apt-get update -q && \
     apt-get install -qy \
