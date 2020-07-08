@@ -68,17 +68,17 @@ class Test_HeaderStorage(unittest.TestCase):
         self.assertTrue(os.path.exists('./test1.db'))
         shutil.rmtree('./test1.db')
 
-    def test_save_block(self):
+    def test_save_header(self):
         db = HeaderStorage('./test2.db')
 
         db.save_header(HEADER_TEST_CASES[0].data)
-        self.assertEqual(HEADER_TEST_CASES[0].hex, bh2u(db.db.Get(to_bytes(str(HEADER_TEST_CASES[0].height)))))
+        self.assertEqual(HEADER_TEST_CASES[0].height, db.read_header(HEADER_TEST_CASES[0].height)['block_height'])
 
         db.save_header(HEADER_TEST_CASES[1].data)
-        self.assertEqual(HEADER_TEST_CASES[1].hex, bh2u(db.db.Get(to_bytes(str(HEADER_TEST_CASES[1].height)))))
+        self.assertEqual(HEADER_TEST_CASES[1].height, db.read_header(HEADER_TEST_CASES[1].height)['block_height'])
 
         db.save_header(HEADER_TEST_CASES[2].data)
-        self.assertEqual(HEADER_TEST_CASES[2].hex, bh2u(db.db.Get(to_bytes(str(HEADER_TEST_CASES[2].height)))))
+        self.assertEqual(HEADER_TEST_CASES[2].height, db.read_header(HEADER_TEST_CASES[2].height)['block_height'])
         
         shutil.rmtree('./test2.db')
 
@@ -94,9 +94,9 @@ class Test_HeaderStorage(unittest.TestCase):
         db = HeaderStorage('./test4.db')
 
         db.save_header_chunk([HEADER_TEST_CASES[0].data, HEADER_TEST_CASES[1].data, HEADER_TEST_CASES[2].data])
-        self.assertEqual(HEADER_TEST_CASES[0].hex, bh2u(db.db.Get(to_bytes(str(HEADER_TEST_CASES[0].height)))))
-        self.assertEqual(HEADER_TEST_CASES[1].hex, bh2u(db.db.Get(to_bytes(str(HEADER_TEST_CASES[1].height)))))
-        self.assertEqual(HEADER_TEST_CASES[2].hex, bh2u(db.db.Get(to_bytes(str(HEADER_TEST_CASES[2].height)))))
+        self.assertEqual(HEADER_TEST_CASES[0].height, db.read_header(HEADER_TEST_CASES[0].height)['block_height'])
+        self.assertEqual(HEADER_TEST_CASES[1].height, db.read_header(HEADER_TEST_CASES[1].height)['block_height'])
+        self.assertEqual(HEADER_TEST_CASES[2].height, db.read_header(HEADER_TEST_CASES[2].height)['block_height'])
 
         with self.assertRaises(HeaderStorageNotContinuousError):
             db.save_header_chunk([HEADER_TEST_CASES[0].data, HEADER_TEST_CASES[2].data])
@@ -125,11 +125,10 @@ class Test_HeaderStorage(unittest.TestCase):
         db.save_header_chunk([HEADER_TEST_CASES[0].data, HEADER_TEST_CASES[1].data, HEADER_TEST_CASES[2].data])
         db.delete_header(HEADER_TEST_CASES[0].height)
         
-        self.assertEqual(HEADER_TEST_CASES[1].hex, bh2u(db.db.Get(to_bytes(str(HEADER_TEST_CASES[1].height)))))
-        self.assertEqual(HEADER_TEST_CASES[2].hex, bh2u(db.db.Get(to_bytes(str(HEADER_TEST_CASES[2].height)))))
+        self.assertEqual(HEADER_TEST_CASES[1].height, db.read_header(HEADER_TEST_CASES[1].height)['block_height'])
+        self.assertEqual(HEADER_TEST_CASES[2].height, db.read_header(HEADER_TEST_CASES[2].height)['block_height'])
 
-        with self.assertRaises(KeyError):
-            db.db.Get(to_bytes(str(HEADER_TEST_CASES[0].height)))
+        self.assertEqual(db.read_header(HEADER_TEST_CASES[0].height), None)
 
         shutil.rmtree('./test6.db')
 
@@ -139,14 +138,9 @@ class Test_HeaderStorage(unittest.TestCase):
         db.save_header_chunk([HEADER_TEST_CASES[0].data, HEADER_TEST_CASES[1].data, HEADER_TEST_CASES[2].data])
         db.delete_header_chunk([HEADER_TEST_CASES[0].height, HEADER_TEST_CASES[1].height, HEADER_TEST_CASES[2].height])
         
-        with self.assertRaises(KeyError):
-            db.db.Get(to_bytes(str(HEADER_TEST_CASES[0].height)))
-
-        with self.assertRaises(KeyError):
-            db.db.Get(to_bytes(str(HEADER_TEST_CASES[1].height)))
-
-        with self.assertRaises(KeyError):
-            db.db.Get(to_bytes(str(HEADER_TEST_CASES[2].height)))
+        self.assertEqual(db.read_header(HEADER_TEST_CASES[0].height), None)
+        self.assertEqual(db.read_header(HEADER_TEST_CASES[1].height), None)
+        self.assertEqual(db.read_header(HEADER_TEST_CASES[2].height), None)
 
         shutil.rmtree('./test7.db')
 

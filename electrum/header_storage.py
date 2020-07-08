@@ -26,7 +26,7 @@
 import os
 from enum import IntEnum
 from typing import Optional
-import leveldb
+import shelve
 
 from .logging import Logger
 from . import blockchain
@@ -46,9 +46,9 @@ def Singleton(cls):
 class HeaderStorageNotContinuousError(Exception): pass
 
 
-# save header to leveldb
+# use shelve to save header
 # key: bytes of header height string
-# vlaue: bytes of serialized header hex string
+# value: bytes of serialized header hex string
 # @Singleton
 class HeaderStorage(Logger):
 
@@ -57,11 +57,14 @@ class HeaderStorage(Logger):
         self.path = standardize_path(path)
         self._file_exists = bool(self.path and os.path.exists(self.path))
         self.logger.info(f"header path {self.path}")
-        self.db = leveldb.LevelDB(self.path)
+        self.db = shelve.open(self.path, 'c')
 
     def _header_exist(self, height: int) -> bool:
         try:
-            self.db.Get(to_bytes(str(height)))
+            bheader = self.db.get(str(height), None)
+
+            if bheader is None:
+                return False
             return True
         except KeyError:
             return False
@@ -71,7 +74,9 @@ class HeaderStorage(Logger):
             self.logger.warning(f"block at height {header['block_height']} already exist, will be ignored")
             return
 
-        self.db.Put(to_bytes(str(header['block_height'])), bfh(blockchain.serialize_header(header)))
+        print('=============== save =====================')
+        print(blockchain.serialize_header(header))
+        self.db[str(header['block_height'])] = blockchain.serialize_header(header)
         
         if header['block_height'] > self.get_latest():
             self.set_latest(header['block_height'])
@@ -79,14 +84,18 @@ class HeaderStorage(Logger):
 
     def read_header(self, height: int) -> Optional[dict]:
         try:
-            bheader = self.db.Get(to_bytes(str(height)))
-            return blockchain.deserialize_header(bheader, height)
+            bheader = self.db.get(str(height), None)
+            print('=============== read =====================')
+            print(bheader)
+            if bheader is None:
+                return None
+            return blockchain.deserialize_header(to_bytes(bheader), height)
         except KeyError:
             self.logger.warning(f"block at height {height} doesn't exist")
             return None
 
     def delete_header(self, height: int) -> None:
-        self.db.Delete(to_bytes(str(height)))
+        del self.db[str(height)]
 
     # header mast be continuous
     def save_header_chunk(self, headerlist: list) -> None:
@@ -102,9 +111,7 @@ class HeaderStorage(Logger):
                 
         batch = leveldb.WriteBatch()
         for header in headerlist:
-            batch.Put(to_bytes(str(header['block_height'])), bfh(blockchain.serialize_header(header)))
-
-        self.db.Write(batch, sync=True)
+            self.db[str(header['block_height'])] = blockchain.serialize_header(header)
 
         self.logger.info(f"{len(headerlist)} blocks saved into header storage")
 
@@ -127,8 +134,10 @@ class HeaderStorage(Logger):
         headerlist = []
         for height in heightlist:
             try:
-                bheader = self.db.Get(to_bytes(str(height)))
-                headerlist.append(blockchain.deserialize_header(bheader, height))
+                bheader = self.db.get(str(height), None)
+                if bheader is None:
+                    return None
+                headerlist.append(blockchain.deserialize_header(to_bytes(bheader), height))
             except KeyError:
                 self.logger.warning(f"block at height {height} doesn't exist")
                 return None
@@ -147,18 +156,18 @@ class HeaderStorage(Logger):
             else:
                 raise HeaderStorageNotContinuousError('height is not continuous during read chunk header')
      
-        batch = leveldb.WriteBatch()
         for height in heightlist:
-            self.db.Delete(to_bytes(str(height)))
-        self.db.Write(batch, sync=True)
+            del self.db[str(height)]
 
     def set_latest(self, height: int):
-        self.db.Put(to_bytes('latest'), bfh(int_to_hex(height, 4)))
+        self.db['latest'] = str(height)
 
     def get_latest(self) -> int:
         try:
-            bheight = self.db.Get(to_bytes('latest'))
-            return int.from_bytes(bheight, byteorder='little')
+            bheight = self.db.get('latest', None)
+            if bheight is None:
+                return 0
+            return int(bheight)
         except KeyError:
             return 0
 
