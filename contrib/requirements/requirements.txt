@@ -11,4 +11,3 @@ certifi
 bitstring
 attrs>=19.2.0
 leveldb>=0.201
-pyblake2>=1.1.2
