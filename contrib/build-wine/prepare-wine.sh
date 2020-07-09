@@ -63,6 +63,9 @@ $PYTHON -m pip install --no-dependencies --no-warn-script-location -r "$CONTRIB"
 info "Installing dependencies specific to binaries."
 $PYTHON -m pip install --no-dependencies --no-warn-script-location -r "$CONTRIB"/deterministic-build/requirements-binaries.txt
 
+info "Installing diskcache."
+$PYTHON -m pip install --no-dependencies --no-warn-script-location diskcache
+
 info "Installing ZBar."
 download_if_not_exist "$CACHEDIR/$ZBAR_FILENAME" "$ZBAR_URL"
 verify_hash "$CACHEDIR/$ZBAR_FILENAME" "$ZBAR_SHA256"
