@@ -12,4 +12,3 @@ attrs>=19.2.0
 # but as that is not pure-python it cannot be listed in this file!
 dnspython>=2.0,<2.1
 leveldb>=0.201
-pyblake2>=1.1.2
