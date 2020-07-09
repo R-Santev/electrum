@@ -26,7 +26,7 @@
 import os
 from enum import IntEnum
 from typing import Optional
-import shelve
+import diskcache
 
 from .logging import Logger
 from . import blockchain
@@ -57,11 +57,11 @@ class HeaderStorage(Logger):
         self.path = standardize_path(path)
         self._file_exists = bool(self.path and os.path.exists(self.path))
         self.logger.info(f"header path {self.path}")
-        self.db = shelve.open(self.path, 'c')
+        self.db = diskcache.Cache(self.path)
 
     def _header_exist(self, height: int) -> bool:
         try:
-            headerstr = self.db.get(str(height), None)
+            headerstr = self.db.get(str(height))
 
             if headerstr is None:
                 return False
@@ -82,7 +82,7 @@ class HeaderStorage(Logger):
 
     def read_header(self, height: int) -> Optional[dict]:
         try:
-            headerstr = self.db.get(str(height), None)
+            headerstr = self.db.get(str(height))
             if headerstr is None:
                 return None
             return blockchain.deserialize_header(bfh(headerstr), height)
@@ -129,7 +129,7 @@ class HeaderStorage(Logger):
         headerlist = []
         for height in heightlist:
             try:
-                headerstr = self.db.get(str(height), None)
+                headerstr = self.db.get(str(height))
                 if headerstr is None:
                     return None
                 headerlist.append(blockchain.deserialize_header(bfh(headerstr), height))
@@ -159,7 +159,7 @@ class HeaderStorage(Logger):
 
     def get_latest(self) -> int:
         try:
-            heightstr = self.db.get('latest', None)
+            heightstr = self.db.get('latest')
             if heightstr is None:
                 return 0
             return int(heightstr)
