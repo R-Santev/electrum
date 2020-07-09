@@ -61,9 +61,9 @@ class HeaderStorage(Logger):
 
     def _header_exist(self, height: int) -> bool:
         try:
-            bheader = self.db.get(str(height), None)
+            headerstr = self.db.get(str(height), None)
 
-            if bheader is None:
+            if headerstr is None:
                 return False
             return True
         except KeyError:
@@ -74,22 +74,18 @@ class HeaderStorage(Logger):
             self.logger.warning(f"block at height {header['block_height']} already exist, will be ignored")
             return
 
-        print('=============== save =====================')
-        print(blockchain.serialize_header(header))
         self.db[str(header['block_height'])] = blockchain.serialize_header(header)
-        
+
         if header['block_height'] > self.get_latest():
             self.set_latest(header['block_height'])
             self.logger.info(f"latest height of header storage update to {header['block_height']}")
 
     def read_header(self, height: int) -> Optional[dict]:
         try:
-            bheader = self.db.get(str(height), None)
-            print('=============== read =====================')
-            print(bheader)
-            if bheader is None:
+            headerstr = self.db.get(str(height), None)
+            if headerstr is None:
                 return None
-            return blockchain.deserialize_header(to_bytes(bheader), height)
+            return blockchain.deserialize_header(bfh(headerstr), height)
         except KeyError:
             self.logger.warning(f"block at height {height} doesn't exist")
             return None
@@ -109,7 +105,6 @@ class HeaderStorage(Logger):
             else:
                 raise HeaderStorageNotContinuousError('header is not continuous during save chunk header')
                 
-        batch = leveldb.WriteBatch()
         for header in headerlist:
             self.db[str(header['block_height'])] = blockchain.serialize_header(header)
 
@@ -134,10 +129,10 @@ class HeaderStorage(Logger):
         headerlist = []
         for height in heightlist:
             try:
-                bheader = self.db.get(str(height), None)
-                if bheader is None:
+                headerstr = self.db.get(str(height), None)
+                if headerstr is None:
                     return None
-                headerlist.append(blockchain.deserialize_header(to_bytes(bheader), height))
+                headerlist.append(blockchain.deserialize_header(bfh(headerstr), height))
             except KeyError:
                 self.logger.warning(f"block at height {height} doesn't exist")
                 return None
@@ -164,10 +159,10 @@ class HeaderStorage(Logger):
 
     def get_latest(self) -> int:
         try:
-            bheight = self.db.get('latest', None)
-            if bheight is None:
+            heightstr = self.db.get('latest', None)
+            if heightstr is None:
                 return 0
-            return int(bheight)
+            return int(heightstr)
         except KeyError:
             return 0
 
