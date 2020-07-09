@@ -57,6 +57,13 @@ break_legacy_easy_install
 info "Installing build dependencies."
 $WINE_PYTHON -m pip install --no-dependencies --no-warn-script-location \
     --cache-dir "$WINE_PIP_CACHE_DIR" -r "$CONTRIB"/deterministic-build/requirements-build-wine.txt
+info "Installing diskcache."
+$PYTHON -m pip install --no-dependencies --no-warn-script-location diskcache
+
+info "Installing ZBar."
+download_if_not_exist "$CACHEDIR/$ZBAR_FILENAME" "$ZBAR_URL"
+verify_hash "$CACHEDIR/$ZBAR_FILENAME" "$ZBAR_SHA256"
+wine "$CACHEDIR/$ZBAR_FILENAME" /S
 
 info "Installing NSIS."
 download_if_not_exist "$CACHEDIR/$NSIS_FILENAME" "$NSIS_URL"
