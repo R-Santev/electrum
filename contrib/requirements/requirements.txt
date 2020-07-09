@@ -7,3 +7,4 @@ aiohttp_socks>=0.3
 certifi
 bitstring
 attrs>=19.2.0
+diskcache>=4.1.0
