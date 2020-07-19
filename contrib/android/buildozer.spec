@@ -49,10 +49,10 @@ requirements =
 
 # (str) Presplash of the application
 #presplash.filename = %(source.dir)s/gui/kivy/theming/splash.png
-presplash.filename = %(source.dir)s/electrum/gui/icons/electrum_presplash.png
+presplash.filename = %(source.dir)s/electrum/gui/icons/electrumg_presplash.png
 
 # (str) Icon of the application
-icon.filename = %(source.dir)s/electrum/gui/icons/electrum_launcher.png
+icon.filename = %(source.dir)s/electrum/gui/icons/electrumg_launcher.png
 
 # (str) Supported orientation (one of landscape, portrait or all)
 orientation = portrait
