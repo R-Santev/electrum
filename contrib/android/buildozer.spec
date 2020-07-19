@@ -50,12 +50,10 @@ requirements =
 
 # (str) Presplash of the application
 #presplash.filename = %(source.dir)s/gui/kivy/theming/splash.png
-presplash.filename = %(source.dir)s/electrum/gui/icons/electrum_presplash.png
+presplash.filename = %(source.dir)s/electrum/gui/icons/electrumg_presplash.png
 
 # (str) Icon of the application
-icon.filename = %(source.dir)s/electrum/gui/icons/android_electrum_icon_legacy.png
-icon.adaptive_foreground.filename = %(source.dir)s/electrum/gui/icons/android_electrum_icon_foreground.png
-icon.adaptive_background.filename = %(source.dir)s/electrum/gui/icons/android_electrum_icon_background.png
+icon.filename = %(source.dir)s/electrum/gui/icons/electrumg_launcher.png
 
 # (str) Supported orientation (one of landscape, portrait or all)
 orientation = portrait
