@@ -7,7 +7,7 @@ import sys, os
 PACKAGE='ElectrumG'
 PYPKG='electrum'
 MAIN_SCRIPT='run_electrum'
-ICONS_FILE=PYPKG + '/gui/icons/electrum.icns'
+ICONS_FILE=PYPKG + '/gui/icons/electrumg.icns'
 APP_SIGN = os.environ.get('APP_SIGN', '')
 
 def fail(*msg):
