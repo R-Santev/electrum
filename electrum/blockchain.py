@@ -463,13 +463,14 @@ class Blockchain(Logger):
     def path(self):
         d = util.get_headers_dir(self.config)
         if self.parent is None:
-            filename = 'blockchain_headers'
+            filename = 'blockchain_headers.v4'
         else:
             assert self.forkpoint > 0, self.forkpoint
             prev_hash = self._prev_hash.lstrip('0')
             first_hash = self._forkpoint_hash.lstrip('0')
             basename = f'fork2_{self.forkpoint}_{prev_hash}_{first_hash}'
             filename = os.path.join('forks', basename)
+            filename = os.path.join(filename, '.v4')
         return os.path.join(d, filename)
 
     def save_chunk(self, height: int, headerlist: list) -> None:
