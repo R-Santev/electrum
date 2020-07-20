@@ -1,6 +1,6 @@
 #!/bin/bash
 
-NAME_ROOT=electrum
+NAME_ROOT=electrumg
 
 export PYTHONDONTWRITEBYTECODE=1
 
