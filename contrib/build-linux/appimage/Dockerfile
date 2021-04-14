@@ -31,6 +31,7 @@ RUN apt-get update -q && \
         libxcb-util1=0.4.0-0ubuntu3 \
         libxcb-xinerama0=1.11.1-1ubuntu1 \
         libc6-dev=2.23-0ubuntu11.2 \
+        g++=4:5.3.1-1ubuntu1 \
         && \
     rm -rf /var/lib/apt/lists/* && \
     apt-get autoremove -y && \
