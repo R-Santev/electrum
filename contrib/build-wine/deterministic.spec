@@ -114,7 +114,7 @@ exe_standalone = EXE(
     a.scripts,
     a.binaries,
     a.datas,
-    name=os.path.join('build\\pyi.win32\\electrum', cmdline_name + ".exe"),
+    name=os.path.join('build\\pyi.win32\\electrumg', cmdline_name + ".exe"),
     debug=False,
     strip=None,
     upx=False,
@@ -127,7 +127,7 @@ exe_portable = EXE(
     a.scripts,
     a.binaries,
     a.datas + [('is_portable', 'README.md', 'DATA')],
-    name=os.path.join('build\\pyi.win32\\electrum', cmdline_name + "-portable.exe"),
+    name=os.path.join('build\\pyi.win32\\electrumg', cmdline_name + "-portable.exe"),
     debug=False,
     strip=None,
     upx=False,
@@ -156,7 +156,7 @@ exe_inside_setup_console = EXE(
     debug=False,
     strip=None,
     upx=False,
-    icon=home+'electrum/gui/icons/electrum.ico',
+    icon=home+'electrum/gui/icons/electrumg.ico',
     console=True)
 
 coll = COLLECT(
