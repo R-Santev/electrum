@@ -30,13 +30,13 @@ string = string.replace("##VERSION_ANDROID##", version_android)
 string = string.replace("##VERSION_APK##", APK_VERSION)
 
 files = {
-    'tgz': "Electrum-%s.tar.gz" % version,
-    'appimage': "electrum-%s-x86_64.AppImage" % version,
-    'zip': "Electrum-%s.zip" % version,
-    'mac': "electrum-%s.dmg" % version_mac,
-    'win': "electrum-%s.exe" % version_win,
-    'win_setup': "electrum-%s-setup.exe" % version_win,
-    'win_portable': "electrum-%s-portable.exe" % version_win,
+    'tgz': "ElectrumG-%s.tar.gz" % version,
+    'appimage': "electrumg-%s-x86_64.AppImage" % version,
+    'zip': "ElectrumG-%s.zip" % version,
+    'mac': "electrumg-%s.dmg" % version_mac,
+    'win': "electrumg-%s.exe" % version_win,
+    'win_setup': "electrumg-%s-setup.exe" % version_win,
+    'win_portable': "electrumg-%s-portable.exe" % version_win,
 }
 
 for k, n in files.items():
