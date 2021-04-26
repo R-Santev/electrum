@@ -115,6 +115,7 @@ class ElectrumGui(Logger):
         self.app = QElectrumApplication(sys.argv)
         self.app.installEventFilter(self.efilter)
         self.app.setWindowIcon(read_QIcon("electrumg.png"))
+        self._cleaned_up = False
         # timer
         self.timer = QTimer(self.app)
         self.timer.setSingleShot(False)
