@@ -133,10 +133,10 @@ Section
 
 
   ;Links bitcoin: URI's to Electrum
-  WriteRegStr HKCU "Software\Classes\bitcoing" "" "URL:bitcoing Protocol"
-  WriteRegStr HKCU "Software\Classes\bitcoing" "URL Protocol" ""
-  WriteRegStr HKCU "Software\Classes\bitcoing" "DefaultIcon" "$\"$INSTDIR\electrumg.ico, 0$\""
-  WriteRegStr HKCU "Software\Classes\bitcoing\shell\open\command" "" "$\"$INSTDIR\electrumg-${PRODUCT_VERSION}.exe$\" $\"%1$\""
+  ; WriteRegStr HKCU "Software\Classes\bitcoing" "" "URL:bitcoing Protocol"
+  ; WriteRegStr HKCU "Software\Classes\bitcoing" "URL Protocol" ""
+  ; WriteRegStr HKCU "Software\Classes\bitcoing" "DefaultIcon" "$\"$INSTDIR\electrumg.ico, 0$\""
+  ; WriteRegStr HKCU "Software\Classes\bitcoing\shell\open\command" "" "$\"$INSTDIR\electrumg-${PRODUCT_VERSION}.exe$\" $\"%1$\""
 
   ;Adds an uninstaller possibility to Windows Uninstall or change a program section
   WriteRegStr HKCU "${PRODUCT_UNINST_KEY}" "DisplayName" "$(^Name)"
