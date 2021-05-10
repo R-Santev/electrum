@@ -831,8 +831,8 @@ def block_explorer_URL(config: 'SimpleConfig', kind: str, item: str) -> Optional
 
 
 # note: when checking against these, use .lower() to support case-insensitivity
-BITCOIN_BIP21_URI_SCHEME = 'bitcoin'
-LIGHTNING_URI_SCHEME = 'lightning'
+BITCOIN_BIP21_URI_SCHEME = 'bitcoingold'
+LIGHTNING_URI_SCHEME = 'lightningbtg'
 
 
 class InvalidBitcoinURI(Exception): pass
