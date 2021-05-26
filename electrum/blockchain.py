@@ -351,7 +351,7 @@ class Blockchain(Logger):
     def check_header(self, header: dict) -> bool:
         header_hash = hash_header(header)
         height = header.get('block_height')
-        return self.check_hash(height, header_hash)     
+        return self.check_hash(height, header_hash)
 
     def check_hash(self, height: int, header_hash: str) -> bool:
         """Returns whether the hash of the block at given height
@@ -363,7 +363,7 @@ class Blockchain(Logger):
         except Exception:
             return False
 
-    def fork(self, parent, header: dict) -> 'Blockchain':
+    def fork(parent, header: dict) -> 'Blockchain':
         if not parent.can_connect(header, check_height=False):
             raise Exception("forking header does not connect to parent chain")
         forkpoint = header.get('block_height')
@@ -585,8 +585,8 @@ class Blockchain(Logger):
     def header_at_tip(self) -> Optional[dict]:
         """Return latest header."""
         height = self.height()
-        return self.read_header(height)   
-        
+        return self.read_header(height)
+
     def is_tip_stale(self) -> bool:
         STALE_DELAY = 8 * 60 * 60  # in seconds
         header = self.header_at_tip()

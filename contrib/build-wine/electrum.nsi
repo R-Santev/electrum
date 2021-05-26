@@ -8,7 +8,7 @@
 
   !define PRODUCT_NAME "ElectrumG"
   !define PRODUCT_WEB_SITE "https://github.com/BTCGPU/electrum"
-  !define PRODUCT_PUBLISHER "BitcoinGold Team"
+  !define PRODUCT_PUBLISHER "The BTG Organization"
   !define PRODUCT_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}"
 
 ;--------------------------------
@@ -133,7 +133,7 @@ Section
 
 
   ;Links bitcoin: URI's to Electrum
-  WriteRegStr HKCU "Software\Classes\bitcoing" "" "URL:bitcoingold Protocol"
+  WriteRegStr HKCU "Software\Classes\bitcoing" "" "URL:BitcoinGold"
   WriteRegStr HKCU "Software\Classes\bitcoing" "URL Protocol" ""
   WriteRegStr HKCU "Software\Classes\bitcoing" "DefaultIcon" "$\"$INSTDIR\electrumg.ico, 0$\""
   WriteRegStr HKCU "Software\Classes\bitcoing\shell\open\command" "" "$\"$INSTDIR\electrumg-${PRODUCT_VERSION}.exe$\" $\"%1$\""

@@ -87,14 +87,9 @@ def encode_fallback(fallback: str, currency):
     """ Encode all supported fallback addresses.
     """
     if currency in [constants.BitcoinGoldMainnet.SEGWIT_HRP, constants.BitcoinGoldTestnet.SEGWIT_HRP]:
-        fbhrp, witness = bech32_decode(fallback, ignore_long_length=True)
-        if fbhrp:
-            if fbhrp != currency:
-                raise ValueError("Not a bech32 address for this currency")
-            wver = witness[0]
-            if wver > 16:
-                raise ValueError("Invalid witness version {}".format(witness[0]))
-            wprog = u5_to_bitarray(witness[1:])
+        wver, wprog_ints = segwit_addr.decode_segwit_address(currency, fallback)	
+        if wver is not None:	
+            wprog = bytes(wprog_ints)
         else:
             addrtype, addr = b58_address_to_hash160(fallback)
             if is_p2pkh(currency, addrtype):

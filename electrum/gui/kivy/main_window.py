@@ -821,8 +821,6 @@ class ElectrumWindow(App, Logger):
         self.history_screen = None
         self.send_screen = None
         self.receive_screen = None
-        self.requests_screen = None
-        self.address_screen = None
         self.icon = "electrum/gui/icons/electrumg.png"
         self.tabs = self.root.ids['tabs']
 
