@@ -42,7 +42,7 @@ def read_json(filename, default):
     return r
 
 GIT_REPO_URL = "https://github.com/BTCGPU/electrum"
-GIT_ISSUE_URL = GIT_REPO_URL + "/issues"
+GIT_REPO_ISSUES_URL = GIT_REPO_URL + "/issues"
 BIP39_WALLET_FORMATS = read_json('bip39_wallet_formats.json', [])
 
 
