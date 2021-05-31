@@ -87,8 +87,8 @@ def encode_fallback(fallback: str, currency):
     """ Encode all supported fallback addresses.
     """
     if currency in [constants.BitcoinGoldMainnet.SEGWIT_HRP, constants.BitcoinGoldTestnet.SEGWIT_HRP]:
-        wver, wprog_ints = segwit_addr.decode_segwit_address(currency, fallback)	
-        if wver is not None:	
+        wver, wprog_ints = segwit_addr.decode_segwit_address(currency, fallback)
+        if wver is not None:
             wprog = bytes(wprog_ints)
         else:
             addrtype, addr = b58_address_to_hash160(fallback)
