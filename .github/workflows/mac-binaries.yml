@@ -12,7 +12,6 @@ jobs:
         with:
           repository: R-santev/electrum
           ref: test
-      - run: sudo xcode-select -s $HOME/Downloads/Xcode.app/Contents/Developer/
       - run: cd electrum
       - run: ./contrib/osx/make_osx
       - name: Archive production artifacts
