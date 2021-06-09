@@ -1,0 +1,26 @@
+name: mac-binaries
+on: 
+  push:
+    branches:
+      - test
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with:
+          repository: R-santev/electrum
+          ref: test
+      - run: sudo xcode-select -s $HOME/Downloads/Xcode.app/Contents/Developer/
+      - run: cd electrum
+      - run: ./contrib/osx/make_osx
+      - name: Archive production artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: mac-binaries
+          path: dist
+      - name: Download a single artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: mac-binaries
